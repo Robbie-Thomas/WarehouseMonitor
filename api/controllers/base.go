@@ -17,7 +17,7 @@ type Server struct {
 }
 
 func (server *Server) Initialiser(Dbdriver, DbUser, DbPassword, DbPort, DbHost, DbName string) {
-	err := error()
+	var err error
 	if Dbdriver == "mysql" {
 		DBURL := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=True&loc=Local", DbUser, DbPassword, DbHost, DbPort, DbName)
 		server.DB, err = gorm.Open(Dbdriver, DBURL)
@@ -42,7 +42,7 @@ func (server *Server) Initialiser(Dbdriver, DbUser, DbPassword, DbPort, DbHost, 
 	}
 	server.DB.Debug().AutoMigrate(&models.User{}, &models.Post{})
 	server.Router = mux.NewRouter()
-	server.initializeRoutes()
+	server.initialiseRoutes()
 }
 
 func (server *Server) Run(addr string) {
