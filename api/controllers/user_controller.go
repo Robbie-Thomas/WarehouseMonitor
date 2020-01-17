@@ -42,7 +42,7 @@ func (server *Server) CreateUser(w http.ResponseWriter, r *http.Request) {
 	responses.JSON(w, http.StatusCreated, CreatedUser)
 }
 
-func (server *Server) GetUsers(w http.ResponseWriter, r http.Request) {
+func (server *Server) GetUsers(w http.ResponseWriter, r *http.Request) {
 	user := models.User{}
 
 	users, err := user.FindAllUsers(server.DB)
