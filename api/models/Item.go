@@ -9,7 +9,7 @@ import (
 )
 
 type Item struct {
-	ID        uint64    `gorm:"primary_key;auto_increment" json:"id"`
+	ID        uint32    `gorm:"primary_key;auto_increment" json:"id"`
 	ItemName  string    `gorm:"size:255;not null;unique" json:"itemname"`
 	Box       Box       `json:"box"`
 	BoxID     uint32    `gorm:"not null" json:"box_id"`
@@ -115,4 +115,17 @@ func (i *Item) DeleteAItem(db *gorm.DB, pid uint64, uid uint32) (int64, error) {
 		return 0, db.Error
 	}
 	return db.RowsAffected, nil
+}
+
+func (i *Item) FindItemByIDAndBoxID(db *gorm.DB, iid uint64, bid uint64) (*Item, error) {
+	var err error
+	err = db.Debug().Model(&Zone{}).Where("id = ? and box_id = ?", iid, bid).Take(&i).Error
+	if err != nil {
+		return &Item{}, err
+	}
+	zone, err2 := i.FetchBox(err, db)
+	if err2 != nil {
+		return zone, err2
+	}
+	return i, nil
 }

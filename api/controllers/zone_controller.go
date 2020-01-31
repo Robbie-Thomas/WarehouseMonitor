@@ -14,115 +14,93 @@ import (
 	"strconv"
 )
 
-func (server *Server) CreateSpace(w http.ResponseWriter, r *http.Request) {
+func (server *Server) CreateZone(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		responses.ERROR(w, http.StatusUnprocessableEntity, err)
 		return
 	}
-	space := models.Space{}
-	err = json.Unmarshal(body, &space)
+	zone := models.Zone{}
+	err = json.Unmarshal(body, &zone)
 	if err != nil {
 		responses.ERROR(w, http.StatusUnprocessableEntity, err)
 		return
 	}
-	space.Prepare()
-	err = space.Validate()
+	zone.Prepare()
+	err = zone.Validate()
 	if err != nil {
 		responses.ERROR(w, http.StatusUnprocessableEntity, err)
 		return
 	}
-	uid, err := auth.ExtractTokenID(r)
+	sid, err := auth.ExtractTokenID(r)
 	if err != nil {
 		responses.ERROR(w, http.StatusUnauthorized, errors.New("Unauthorised"))
 		return
 	}
-	if uid != space.ID {
+	if sid != zone.ID {
 		responses.ERROR(w, http.StatusUnauthorized, errors.New(http.StatusText(http.StatusUnauthorized)))
 		return
 	}
-	spaceCreated, err := space.SaveSpace(server.DB)
+	zoneCreated, err := zone.SaveZone(server.DB)
 	if err != nil {
 		formattedError := formaterror.FormatError(err.Error())
 		responses.ERROR(w, http.StatusInternalServerError, formattedError)
 		return
 	}
-	w.Header().Set("Location", fmt.Sprintf("%s%s/%d", r.Host, r.URL.Path, spaceCreated.ID))
-	responses.JSON(w, http.StatusCreated, spaceCreated)
+	w.Header().Set("Location", fmt.Sprintf("%s%s/%d", r.Host, r.URL.Path, zoneCreated.ID))
+	responses.JSON(w, http.StatusCreated, zoneCreated)
 }
 
-func (server *Server) GetSpaces(w http.ResponseWriter, r *http.Request) {
-	space := models.Space{}
+func (server *Server) GetZones(w http.ResponseWriter, r *http.Request) {
+	zone := models.Zone{}
 
-	spaces, err := space.FindAllSpaces(server.DB)
+	zones, err := zone.FindAllZones(server.DB)
 	if err != nil {
 		responses.ERROR(w, http.StatusInternalServerError, err)
 		return
 	}
-	responses.JSON(w, http.StatusOK, spaces)
+	responses.JSON(w, http.StatusOK, zones)
 }
 
-func (server *Server) getSpace(w http.ResponseWriter, r *http.Request) {
+func (server *Server) getZone(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	pid, err := strconv.ParseUint(vars["id"], 10, 64)
+	zid, err := strconv.ParseUint(vars["id"], 10, 64)
 	if err != nil {
 		responses.ERROR(w, http.StatusBadRequest, err)
 		return
 	}
-	space := models.Space{}
-	spaceReceived, err := space.FindSpaceByID(server.DB, pid)
+	zone := models.Zone{}
+	zoneReceived, err := zone.FindZoneByID(server.DB, zid)
 	if err != nil {
 		responses.ERROR(w, http.StatusInternalServerError, err)
 		return
 	}
-	responses.JSON(w, http.StatusOK, spaceReceived)
+	responses.JSON(w, http.StatusOK, zoneReceived)
 }
 
-func (server *Server) getSpaceForID(w http.ResponseWriter, r *http.Request) {
+func (server *Server) UpdateZone(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	sid, err := strconv.ParseUint(vars["id"], 10, 64)
-	if err != nil {
-		responses.ERROR(w, http.StatusBadRequest, err)
-		return
-	}
-	uid, err := strconv.ParseUint(vars["userID"], 10, 32)
-	if err != nil {
-		responses.ERROR(w, http.StatusBadRequest, err)
-		return
-	}
-	space := models.Space{}
-	spaceReceived, err := space.FindSpaceByIDAndUserID(server.DB, sid, uid)
-	if err != nil {
-		responses.ERROR(w, http.StatusInternalServerError, err)
-		return
-	}
-	responses.JSON(w, http.StatusOK, spaceReceived)
-}
-
-func (server *Server) UpdateSpace(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-
-	pid, err := strconv.ParseUint(vars["id"], 10, 64)
+	zid, err := strconv.ParseUint(vars["id"], 10, 64)
 	if err != nil {
 		responses.ERROR(w, http.StatusUnauthorized, errors.New("Unauthorised"))
 		return
 	}
 
-	uid, err := auth.ExtractTokenID(r)
+	sid, err := auth.ExtractTokenID(r)
 	if err != nil {
 		responses.ERROR(w, http.StatusUnauthorized, errors.New("Unauthorised"))
 		return
 	}
 
-	space := models.Space{}
-	err = server.DB.Debug().Model(models.Space{}).Where("id = ?", pid).Take(&space).Error
+	zone := models.Zone{}
+	err = server.DB.Debug().Model(models.Zone{}).Where("id = ?", zid).Take(&zone).Error
 	if err != nil {
-		responses.ERROR(w, http.StatusUnauthorized, errors.New("Space not found"))
+		responses.ERROR(w, http.StatusUnauthorized, errors.New("Zone not found"))
 		return
 	}
 
-	if uid != space.ID {
+	if sid != zone.ID {
 		responses.ERROR(w, http.StatusUnauthorized, errors.New("Unauthorised"))
 		return
 	}
@@ -131,63 +109,63 @@ func (server *Server) UpdateSpace(w http.ResponseWriter, r *http.Request) {
 		responses.ERROR(w, http.StatusUnprocessableEntity, err)
 		return
 	}
-	spaceUpdate := models.Space{}
-	err = json.Unmarshal(body, &spaceUpdate)
+	zoneUpdate := models.Zone{}
+	err = json.Unmarshal(body, &zoneUpdate)
 	if err != nil {
 		responses.ERROR(w, http.StatusUnprocessableEntity, err)
 		return
 	}
 
-	if uid != spaceUpdate.ID {
+	if sid != zoneUpdate.ID {
 		responses.ERROR(w, http.StatusUnauthorized, errors.New("Unauthorised"))
 		return
 	}
-	spaceUpdate.Prepare()
-	err = spaceUpdate.Validate()
+	zoneUpdate.Prepare()
+	err = zoneUpdate.Validate()
 	if err != nil {
 		responses.ERROR(w, http.StatusUnauthorized, err)
 		return
 	}
-	spaceUpdate.ID = space.ID
-	UpdatedSpace, err := spaceUpdate.UpdateASpace(server.DB)
+	zoneUpdate.ID = zone.ID
+	UpdatedZone, err := zoneUpdate.UpdateAZone(server.DB)
 	if err != nil {
 		formattedError := formaterror.FormatError(err.Error())
 		responses.ERROR(w, http.StatusInternalServerError, formattedError)
 		return
 	}
-	responses.JSON(w, http.StatusOK, UpdatedSpace)
+	responses.JSON(w, http.StatusOK, UpdatedZone)
 
 }
 
-func (server *Server) DeleteSpace(w http.ResponseWriter, r *http.Request) {
+func (server *Server) DeleteZone(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	pid, err := strconv.ParseUint(vars["id"], 10, 64)
+	zid, err := strconv.ParseUint(vars["id"], 10, 64)
 	if err != nil {
 		responses.ERROR(w, http.StatusBadRequest, err)
 		return
 	}
-	uid, err := auth.ExtractTokenID(r)
+	sid, err := auth.ExtractTokenID(r)
 	if err != nil {
 		responses.ERROR(w, http.StatusUnauthorized, errors.New("Unauthorized"))
 		return
 	}
-	space := models.Space{}
-	err = server.DB.Debug().Model(models.Space{}).Where("id = ?", pid).Take(&space).Error
+	zone := models.Zone{}
+	err = server.DB.Debug().Model(models.Zone{}).Where("id = ?", zid).Take(&zone).Error
 	if err != nil {
 		responses.ERROR(w, http.StatusNotFound, errors.New("Unauthorised"))
 		return
 	}
 
-	if uid != space.OwnerID {
+	if sid != zone.SpaceID {
 		responses.ERROR(w, http.StatusUnauthorized, errors.New("Unauthorised"))
 		return
 	}
-	_, err = space.DeleteASpace(server.DB, pid, uid)
+	_, err = zone.DeleteAZone(server.DB, zid, sid)
 	if err != nil {
 		responses.ERROR(w, http.StatusBadRequest, err)
 		return
 	}
-	w.Header().Set("Entity", fmt.Sprintf("%d", pid))
+	w.Header().Set("Entity", fmt.Sprintf("%d", zid))
 	responses.JSON(w, http.StatusNoContent, "")
 
 }

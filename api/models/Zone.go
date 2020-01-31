@@ -9,7 +9,7 @@ import (
 )
 
 type Zone struct {
-	ID        uint64    `gorm:"primary_key;auto_increment" json:"id"`
+	ID        uint32    `gorm:"primary_key;auto_increment" json:"id"`
 	ZoneName  string    `gorm:"size:255;not null;unique" json:"zonename"`
 	Space     Space     `json:"space"`
 	SpaceID   uint32    `gorm:"not null" json:"space_id"`
@@ -77,6 +77,19 @@ func (z *Zone) FindAllZones(db *gorm.DB) (*[]Zone, error) {
 	return &zones, nil
 }
 
+func (z *Zone) FindZoneBySpaceID(db *gorm.DB, zid uint64, sid uint64) (*Zone, error) {
+	var err error
+	err = db.Debug().Model(&Space{}).Where("id = ? and space_id = ?", zid, sid).Take(&z).Error
+	if err != nil {
+		return &Zone{}, err
+	}
+	zone, err2 := z.FetchSpace(err, db)
+	if err2 != nil {
+		return zone, err2
+	}
+	return z, nil
+}
+
 func (z *Zone) FindZoneByID(db *gorm.DB, pid uint64) (*Zone, error) {
 	var err error
 	err = db.Debug().Model(&Zone{}).Where("id = ?", pid).Take(&z).Error
@@ -115,4 +128,17 @@ func (z *Zone) DeleteAZone(db *gorm.DB, pid uint64, uid uint32) (int64, error) {
 		return 0, db.Error
 	}
 	return db.RowsAffected, nil
+}
+
+func (z *Zone) FindZoneByIDAndSpaceID(db *gorm.DB, zid uint64, sid uint64) (*Zone, error) {
+	var err error
+	err = db.Debug().Model(&Zone{}).Where("id = ? and space_id = ?", zid, sid).Take(&z).Error
+	if err != nil {
+		return &Zone{}, err
+	}
+	space, err2 := z.FetchSpace(err, db)
+	if err2 != nil {
+		return space, err2
+	}
+	return z, nil
 }

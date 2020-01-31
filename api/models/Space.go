@@ -90,6 +90,19 @@ func (s *Space) FindSpaceByID(db *gorm.DB, pid uint64) (*Space, error) {
 	return s, nil
 }
 
+func (s *Space) FindSpaceByIDAndUserID(db *gorm.DB, sid uint64, uid uint64) (*Space, error) {
+	var err error
+	err = db.Debug().Model(&Space{}).Where("id = ? and owner_id = ?", sid, uid).Take(&s).Error
+	if err != nil {
+		return &Space{}, err
+	}
+	user, err2 := s.FetchUser(err, db)
+	if err2 != nil {
+		return user, err2
+	}
+	return s, nil
+}
+
 func (s *Space) UpdateASpace(db *gorm.DB) (*Space, error) {
 	var err error
 	err = db.Debug().Model(&Space{}).Where("id = ?", s.ID).Updates(Space{
@@ -115,4 +128,13 @@ func (s *Space) DeleteASpace(db *gorm.DB, pid uint64, uid uint32) (int64, error)
 		return 0, db.Error
 	}
 	return db.RowsAffected, nil
+}
+
+func (s *Space) FetchUserForSpace(db *gorm.DB) (User, error) {
+	var err error
+	s.FetchUser(err, db)
+	if err != nil {
+		return s.User, err
+	}
+	return s.User, nil
 }

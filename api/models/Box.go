@@ -9,7 +9,7 @@ import (
 )
 
 type Box struct {
-	ID        uint64    `gorm:"primary_key;auto_increment" json:"id"`
+	ID        uint32    `gorm:"primary_key;auto_increment" json:"id"`
 	BoxName   string    `gorm:"size:255;not null;unique" json:"boxname"`
 	Zone      Zone      `json:"zone"`
 	ZoneID    uint32    `gorm:"not null" json:"zone_id"`
@@ -59,6 +59,16 @@ func (b *Box) FetchZone(err error, db *gorm.DB) (*Box, error) {
 	return nil, nil
 }
 
+func (b *Box) FetchSpace(err error, db *gorm.DB) (*Box, error) {
+	if b.ID != 0 {
+		err = db.Debug().Model(&Zone{}).Where("id = ?", b.ZoneID).Take(&b.Zone).Error
+		if err != nil {
+			return &Box{}, err
+		}
+	}
+	return nil, nil
+}
+
 func (b *Box) FindAllBoxes(db *gorm.DB) (*[]Box, error) {
 	var err error
 	boxes := []Box{}
@@ -90,6 +100,46 @@ func (b *Box) FindBoxByID(db *gorm.DB, pid uint64) (*Box, error) {
 	return b, nil
 }
 
+func (b *Box) findBoxByZoneID(db *gorm.DB, bid uint64, zid uint64) (*Box, error) {
+	var err error
+	err = db.Debug().Model(&Zone{}).Where("id = ? and zone_id = ?", bid, zid).Take(&b).Error
+	if err != nil {
+		return &Box{}, err
+	}
+	zone, err2 := b.FetchZone(err, db)
+	if err2 != nil {
+		return zone, err2
+	}
+	return b, nil
+}
+
+/*func (b *Box) findBoxByParms(db *gorm.DB, bid uint64, zid uint64, sid uint64, uid uint64) (*Box, error) {
+	var err error
+	err = db.Debug().Model(&Zone{}).Where("id = ? and zone_id = ?", bid, zid).Take(&b).Error
+	if err != nil {
+		return &Box{}, err
+	}
+	err = db.Debug().Model(&Space{}).Where("id = ? and space_id = ?", zid, sid).Take(Zone{}).Error
+	if err != nil {
+		return &Box{}, err
+	}
+	err = db.Debug().Model(&Space{}).Where("id = ? and owner_id = ?", sid, uid).Take(Space{}).Error
+	if err != nil {
+		return &Box{}, err
+	}
+	zone, err2 := b.FetchZone(err, db)
+	if err2 != nil {
+		return zone, err2
+	}
+	return b, nil
+	space, err3 := b.fe(err, db)
+	if err2 != nil {
+		return zone, err2
+	}
+	return b, nil
+
+}*/
+
 func (b *Box) UpdateABox(db *gorm.DB) (*Box, error) {
 	var err error
 	err = db.Debug().Model(&Box{}).Where("id = ?", b.ID).Updates(Box{
@@ -115,4 +165,17 @@ func (b *Box) DeleteABox(db *gorm.DB, pid uint64, uid uint32) (int64, error) {
 		return 0, db.Error
 	}
 	return db.RowsAffected, nil
+}
+
+func (b *Box) FindBoxByIDAndZoneID(db *gorm.DB, bid uint64, zid uint64) (*Box, error) {
+	var err error
+	err = db.Debug().Model(&Zone{}).Where("id = ? and zone_id = ?", bid, zid).Take(&b).Error
+	if err != nil {
+		return &Box{}, err
+	}
+	zone, err2 := b.FetchZone(err, db)
+	if err2 != nil {
+		return zone, err2
+	}
+	return b, nil
 }

@@ -29,4 +29,29 @@ func (server *Server) initialiseRoutes() {
 	server.Router.HandleFunc("/spaces/{id}", middlewares.SetMiddlewareJSON(server.getSpace)).Methods("GET")
 	server.Router.HandleFunc("/spaces/{id}", middlewares.SetMiddlewareJSON(middlewares.SetMiddlewareAuthentication(server.UpdateSpace))).Methods("PUT")
 	server.Router.HandleFunc("/spaces/{id}", middlewares.SetMiddlewareAuthentication(server.DeleteSpace)).Methods("DELETE")
+
+	server.Router.HandleFunc("/zones", middlewares.SetMiddlewareJSON(server.CreateZone)).Methods("POST")
+	server.Router.HandleFunc("/zones", middlewares.SetMiddlewareJSON(server.GetZones)).Methods("GET")
+	server.Router.HandleFunc("/zones/{id}", middlewares.SetMiddlewareJSON(server.getZone)).Methods("GET")
+	server.Router.HandleFunc("/zones/{id}", middlewares.SetMiddlewareJSON(middlewares.SetMiddlewareAuthentication(server.UpdateZone))).Methods("PUT")
+	server.Router.HandleFunc("/zones/{id}", middlewares.SetMiddlewareAuthentication(server.DeleteZone)).Methods("DELETE")
+
+	server.Router.HandleFunc("/boxes", middlewares.SetMiddlewareJSON(server.CreateBox)).Methods("POST")
+	server.Router.HandleFunc("/boxes", middlewares.SetMiddlewareJSON(server.GetBoxs)).Methods("GET")
+	server.Router.HandleFunc("/boxes/{id}", middlewares.SetMiddlewareJSON(server.getBox)).Methods("GET")
+	server.Router.HandleFunc("/boxes/{id}", middlewares.SetMiddlewareJSON(middlewares.SetMiddlewareAuthentication(server.UpdateBox))).Methods("PUT")
+	server.Router.HandleFunc("/boxes/{id}", middlewares.SetMiddlewareAuthentication(server.DeleteBox)).Methods("DELETE")
+
+	server.Router.HandleFunc("/items", middlewares.SetMiddlewareJSON(server.CreateItem)).Methods("POST")
+	server.Router.HandleFunc("/items", middlewares.SetMiddlewareJSON(server.GetItems)).Methods("GET")
+	server.Router.HandleFunc("/items/{id}", middlewares.SetMiddlewareJSON(server.getItem)).Methods("GET")
+	server.Router.HandleFunc("/items/{id}", middlewares.SetMiddlewareJSON(middlewares.SetMiddlewareAuthentication(server.UpdateItem))).Methods("PUT")
+	server.Router.HandleFunc("/items/{id}", middlewares.SetMiddlewareAuthentication(server.DeleteItem)).Methods("DELETE")
+
+	server.Router.HandleFunc("/user/{userID}/space/{id}", middlewares.SetMiddlewareJSON(server.getSpaceForID)).Methods("GET")
+	server.Router.HandleFunc("/user/{userID}/space/{spaceID}", middlewares.SetMiddlewareJSON(server.getSpaceForID)).Methods("GET")
+	server.Router.HandleFunc("/user/{userID}/space/{spaceID}/zone/{zoneID}", middlewares.SetMiddlewareJSON(server.getSpaceForID)).Methods("GET")
+	server.Router.HandleFunc("/user/{userID}/space/{spaceID}/zone/{zoneID}/box/{boxID}", middlewares.SetMiddlewareJSON(server.getSpaceForID)).Methods("GET")
+	server.Router.HandleFunc("/user/{userID}/space/{spaceID}/zone/{zoneID}/box/{boxID}/item/{itemID}", middlewares.SetMiddlewareJSON(server.fetchItem)).Methods("GET")
+
 }
