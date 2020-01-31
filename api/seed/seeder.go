@@ -30,18 +30,35 @@ var posts = []models.Post{
 	},
 }
 
+var spaces = []models.Space{
+	{
+		SpaceName: "Garage",
+		OwnerID:   1,
+	},
+
+	{
+		SpaceName: "Attic",
+		OwnerID:   1,
+	},
+}
+
 func Load(db *gorm.DB) {
 
-	err := db.Debug().DropTableIfExists(&models.Post{}, &models.User{}).Error
+	err := db.Debug().DropTableIfExists(&models.Post{}, &models.User{}, &models.Space{}).Error
 	if err != nil {
 		log.Fatalf("cannot drop table: %v", err)
 	}
-	err = db.Debug().AutoMigrate(&models.User{}, &models.Post{}).Error
+	err = db.Debug().AutoMigrate(&models.User{}, &models.Post{}, &models.Space{}).Error
 	if err != nil {
 		log.Fatalf("cannot migrate table: %v", err)
 	}
 
 	err = db.Debug().Model(&models.Post{}).AddForeignKey("author_id", "users(id)", "cascade", "cascade").Error
+	if err != nil {
+		log.Fatalf("attaching foreign key error: %v", err)
+	}
+
+	err = db.Debug().Model(&models.Space{}).AddForeignKey("owner_id", "users(id)", "cascade", "cascade").Error
 	if err != nil {
 		log.Fatalf("attaching foreign key error: %v", err)
 	}
@@ -56,6 +73,11 @@ func Load(db *gorm.DB) {
 		err = db.Debug().Model(&models.Post{}).Create(&posts[i]).Error
 		if err != nil {
 			log.Fatalf("cannot seed posts table: %v", err)
+		}
+
+		err = db.Debug().Model(&models.Space{}).Create(&spaces[i]).Error
+		if err != nil {
+			log.Fatalf("cannot seed spaces table: %v", err)
 		}
 	}
 }
