@@ -64,7 +64,7 @@ func (server *Server) GetItems(w http.ResponseWriter, r *http.Request) {
 
 func (server *Server) getItem(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	iid, err := strconv.ParseUint(vars["id"], 10, 64)
+	iid, err := strconv.ParseUint(vars["itemID"], 10, 64)
 	if err != nil {
 		responses.ERROR(w, http.StatusBadRequest, err)
 		return
@@ -75,6 +75,14 @@ func (server *Server) getItem(w http.ResponseWriter, r *http.Request) {
 		responses.ERROR(w, http.StatusInternalServerError, err)
 		return
 	}
+	box := models.Box{}
+	box = itemReceived.Box
+	zone := models.Zone{}
+	zone = box.Zone
+	space := models.Space{}
+	space = zone.Space
+	_ = space.User
+
 	responses.JSON(w, http.StatusOK, itemReceived)
 }
 
@@ -120,11 +128,7 @@ func (server *Server) fetchItem(w http.ResponseWriter, r *http.Request) {
 		responses.ERROR(w, http.StatusInternalServerError, err)
 		return
 	}
-	/*SpaceUserReceived, err := space.FetchUser(err, server.DB)
-	if err != nil {
-		responses.ERROR(w, http.StatusInternalServerError, err)
-		return
-	}*/
+
 	user = *UserReceived
 	ZoneReceived.Space = *spaceReceived
 	BoxReceived.Zone = *ZoneReceived
@@ -135,7 +139,7 @@ func (server *Server) fetchItem(w http.ResponseWriter, r *http.Request) {
 func (server *Server) UpdateItem(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	iid, err := strconv.ParseUint(vars["id"], 10, 64)
+	iid, err := strconv.ParseUint(vars["itemID"], 10, 64)
 	if err != nil {
 		responses.ERROR(w, http.StatusUnauthorized, errors.New("Unauthorised"))
 		return
@@ -193,7 +197,7 @@ func (server *Server) UpdateItem(w http.ResponseWriter, r *http.Request) {
 
 func (server *Server) DeleteItem(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	iid, err := strconv.ParseUint(vars["id"], 10, 64)
+	iid, err := strconv.ParseUint(vars["itemID"], 10, 64)
 	if err != nil {
 		responses.ERROR(w, http.StatusBadRequest, err)
 		return

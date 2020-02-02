@@ -51,7 +51,7 @@ func (server *Server) CreateBox(w http.ResponseWriter, r *http.Request) {
 	responses.JSON(w, http.StatusCreated, boxCreated)
 }
 
-func (server *Server) GetBoxs(w http.ResponseWriter, r *http.Request) {
+func (server *Server) getBoxes(w http.ResponseWriter, r *http.Request) {
 	box := models.Box{}
 
 	boxs, err := box.FindAllBoxes(server.DB)
@@ -62,9 +62,54 @@ func (server *Server) GetBoxs(w http.ResponseWriter, r *http.Request) {
 	responses.JSON(w, http.StatusOK, boxs)
 }
 
+func (server *Server) fetchBoxes(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	uid, err := strconv.ParseUint(vars["userID"], 10, 64)
+	if err != nil {
+		responses.ERROR(w, http.StatusBadRequest, err)
+		return
+	}
+	user := models.User{}
+	UserReceived, err := user.FindUserByID(server.DB, uint32(uid))
+	if err != nil {
+		responses.ERROR(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	box := models.Box{}
+	boxes, err := box.FindAllBoxes(server.DB)
+	if err != nil {
+		responses.ERROR(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	for i := range *boxes {
+		if (*boxes)[i].Zone.Space.OwnerID == uint32(uid) {
+			(*boxes)[i].Zone.Space.User = *UserReceived
+		}
+	}
+	responses.JSON(w, http.StatusOK, boxes)
+}
+
 func (server *Server) getBox(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	bid, err := strconv.ParseUint(vars["id"], 10, 64)
+	bid, err := strconv.ParseUint(vars["boxID"], 10, 64)
+	if err != nil {
+		responses.ERROR(w, http.StatusBadRequest, err)
+		return
+	}
+	box := models.Box{}
+	boxReceived, err := box.FindBoxByID(server.DB, bid)
+	if err != nil {
+		responses.ERROR(w, http.StatusInternalServerError, err)
+		return
+	}
+	responses.JSON(w, http.StatusOK, boxReceived)
+}
+
+func (server *Server) fetchBox(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	bid, err := strconv.ParseUint(vars["boxID"], 10, 64)
 	if err != nil {
 		responses.ERROR(w, http.StatusBadRequest, err)
 		return
@@ -81,7 +126,7 @@ func (server *Server) getBox(w http.ResponseWriter, r *http.Request) {
 func (server *Server) UpdateBox(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	bid, err := strconv.ParseUint(vars["id"], 10, 64)
+	bid, err := strconv.ParseUint(vars["boxID"], 10, 64)
 	if err != nil {
 		responses.ERROR(w, http.StatusUnauthorized, errors.New("Unauthorised"))
 		return
@@ -139,7 +184,7 @@ func (server *Server) UpdateBox(w http.ResponseWriter, r *http.Request) {
 
 func (server *Server) DeleteBox(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	bid, err := strconv.ParseUint(vars["id"], 10, 64)
+	bid, err := strconv.ParseUint(vars["boxID"], 10, 64)
 	if err != nil {
 		responses.ERROR(w, http.StatusBadRequest, err)
 		return

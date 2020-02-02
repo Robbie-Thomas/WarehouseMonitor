@@ -98,7 +98,7 @@ var items = []models.Item{
 
 func Load(db *gorm.DB) {
 
-	err := db.Debug().DropTableIfExists(&models.Post{}, &models.User{}, &models.Space{}, &models.Zone{}, &models.Box{}, &models.Item{}).Error
+	err := db.Debug().DropTableIfExists(&models.Item{}, &models.Box{}, &models.Zone{}, &models.Space{}, &models.Post{}, &models.User{}).Error
 	if err != nil {
 		log.Fatalf("cannot drop table: %v", err)
 	}

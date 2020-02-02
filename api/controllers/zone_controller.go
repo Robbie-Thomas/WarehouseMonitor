@@ -62,9 +62,36 @@ func (server *Server) GetZones(w http.ResponseWriter, r *http.Request) {
 	responses.JSON(w, http.StatusOK, zones)
 }
 
+func (server *Server) fetchZonesForUser(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	uid, err := strconv.ParseUint(vars["userID"], 10, 64)
+	if err != nil {
+		responses.ERROR(w, http.StatusBadRequest, err)
+		return
+	}
+	zone := models.Zone{}
+	zones, err := zone.FindAllZones(server.DB)
+	if err != nil {
+		responses.ERROR(w, http.StatusInternalServerError, err)
+		return
+	}
+	user := models.User{}
+	UserReceived, err := user.FindUserByID(server.DB, uint32(uid))
+	if err != nil {
+		responses.ERROR(w, http.StatusInternalServerError, err)
+		return
+	}
+	for i := range *zones {
+		if (*zones)[i].Space.OwnerID == uint32(uid) {
+			(*zones)[i].Space.User = *UserReceived
+		}
+	}
+	responses.JSON(w, http.StatusOK, zones)
+}
+
 func (server *Server) getZone(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	zid, err := strconv.ParseUint(vars["id"], 10, 64)
+	zid, err := strconv.ParseUint(vars["zoneID"], 10, 64)
 	if err != nil {
 		responses.ERROR(w, http.StatusBadRequest, err)
 		return
@@ -75,13 +102,47 @@ func (server *Server) getZone(w http.ResponseWriter, r *http.Request) {
 		responses.ERROR(w, http.StatusInternalServerError, err)
 		return
 	}
+	space := models.Space{}
+	space = zone.Space
+	user := models.User{}
+	user = space.User
+	space.FetchUserForSpace(server.DB)
+	zone.Space.User = user
+	responses.JSON(w, http.StatusOK, zoneReceived)
+}
+
+func (server *Server) fetchZoneForUser(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	zid, err := strconv.ParseUint(vars["zoneID"], 10, 64)
+	if err != nil {
+		responses.ERROR(w, http.StatusBadRequest, err)
+		return
+	}
+	uid, err := strconv.ParseUint(vars["userID"], 10, 64)
+	if err != nil {
+		responses.ERROR(w, http.StatusBadRequest, err)
+		return
+	}
+	user := models.User{}
+	UserReceived, err := user.FindUserByID(server.DB, uint32(uid))
+	if err != nil {
+		responses.ERROR(w, http.StatusInternalServerError, err)
+		return
+	}
+	zone := models.Zone{}
+	zoneReceived, err := zone.FindZoneByID(server.DB, zid)
+	if err != nil {
+		responses.ERROR(w, http.StatusInternalServerError, err)
+		return
+	}
+	zoneReceived.Space.User = *UserReceived
 	responses.JSON(w, http.StatusOK, zoneReceived)
 }
 
 func (server *Server) UpdateZone(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	zid, err := strconv.ParseUint(vars["id"], 10, 64)
+	zid, err := strconv.ParseUint(vars["zoneID"], 10, 64)
 	if err != nil {
 		responses.ERROR(w, http.StatusUnauthorized, errors.New("Unauthorised"))
 		return
@@ -139,7 +200,7 @@ func (server *Server) UpdateZone(w http.ResponseWriter, r *http.Request) {
 
 func (server *Server) DeleteZone(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	zid, err := strconv.ParseUint(vars["id"], 10, 64)
+	zid, err := strconv.ParseUint(vars["zoneID"], 10, 64)
 	if err != nil {
 		responses.ERROR(w, http.StatusBadRequest, err)
 		return
