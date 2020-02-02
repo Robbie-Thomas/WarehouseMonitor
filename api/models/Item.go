@@ -77,9 +77,9 @@ func (i *Item) FindAllItems(db *gorm.DB) (*[]Item, error) {
 	return &items, nil
 }
 
-func (i *Item) FindItemByID(db *gorm.DB, pid uint64) (*Item, error) {
+func (i *Item) FindItemByID(db *gorm.DB, iid uint64) (*Item, error) {
 	var err error
-	err = db.Debug().Model(&Item{}).Where("id = ?", pid).Take(&i).Error
+	err = db.Debug().Model(&Item{}).Where("id = ?", iid).Take(&i).Error
 	if err != nil {
 		return &Item{}, err
 	}
@@ -106,8 +106,8 @@ func (i *Item) UpdateAItem(db *gorm.DB) (*Item, error) {
 	return i, nil
 }
 
-func (i *Item) DeleteAItem(db *gorm.DB, pid uint64, uid uint32) (int64, error) {
-	db = db.Debug().Model(&Item{}).Where("id = ? and box_id = ?", pid, uid).Take(&Item{}).Delete(&Item{})
+func (i *Item) DeleteAItem(db *gorm.DB, iid uint64, uid uint32) (int64, error) {
+	db = db.Debug().Model(&Item{}).Where("id = ? and box_id = ?", iid, uid).Take(&Item{}).Delete(&Item{})
 	if db.Error != nil {
 		if gorm.IsRecordNotFoundError(db.Error) {
 			return 0, errors.New("Item not found")

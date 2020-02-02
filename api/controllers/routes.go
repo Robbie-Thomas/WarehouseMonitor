@@ -71,9 +71,9 @@ func (server *Server) initialiseRoutes() {
 	server.Router.HandleFunc("/user/{userID}/box/{boxID}", middlewares.SetMiddlewareJSON(server.UpdateBox)).Methods("PUT")
 	server.Router.HandleFunc("/user/{userID}/box/{boxID}", middlewares.SetMiddlewareJSON(server.DeleteBox)).Methods("DELETE")
 
-	server.Router.HandleFunc("/user/{userID}/items", middlewares.SetMiddlewareJSON(server.GetItems)).Methods("GET")
+	server.Router.HandleFunc("/user/{userID}/items", middlewares.SetMiddlewareJSON(server.fetchItemsForUser)).Methods("GET")
 	server.Router.HandleFunc("/user/{userID}/items", middlewares.SetMiddlewareJSON(server.CreateItem)).Methods("POST")
-	server.Router.HandleFunc("/user/{userID}/item/{itemID}", middlewares.SetMiddlewareJSON(server.getItem)).Methods("GET")
+	server.Router.HandleFunc("/user/{userID}/item/{itemID}", middlewares.SetMiddlewareJSON(server.fetchItemForUser)).Methods("GET")
 	server.Router.HandleFunc("/user/{userID}/item/{itemID}", middlewares.SetMiddlewareJSON(server.UpdateItem)).Methods("PUT")
 	server.Router.HandleFunc("/user/{userID}/item/{itemID}", middlewares.SetMiddlewareJSON(server.DeleteItem)).Methods("DELETE")
 

@@ -5,7 +5,7 @@ services:
     container_name: full_app_test
     build:
       context: .
-      dockerfile: ./Dockerfile.test
+      dockerfile: test.Dockerfile
     volumes:
       - api_test:/app/src/app/
     depends_on:

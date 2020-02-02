@@ -62,6 +62,33 @@ func (server *Server) GetItems(w http.ResponseWriter, r *http.Request) {
 	responses.JSON(w, http.StatusOK, items)
 }
 
+func (server *Server) fetchItemsForUser(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	uid, err := strconv.ParseUint(vars["userID"], 10, 64)
+	if err != nil {
+		responses.ERROR(w, http.StatusBadRequest, err)
+		return
+	}
+	user := models.User{}
+	UserReceived, err := user.FindUserByID(server.DB, uint32(uid))
+	if err != nil {
+		responses.ERROR(w, http.StatusInternalServerError, err)
+		return
+	}
+	item := models.Item{}
+	items, err := item.FindAllItems(server.DB)
+	if err != nil {
+		responses.ERROR(w, http.StatusInternalServerError, err)
+		return
+	}
+	for i := range *items {
+		if (*items)[i].Box.Zone.Space.User.ID == uint32(uid) {
+			(*items)[i].Box.Zone.Space.User = *UserReceived
+		}
+	}
+	responses.JSON(w, http.StatusOK, items)
+}
+
 func (server *Server) getItem(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	iid, err := strconv.ParseUint(vars["itemID"], 10, 64)
@@ -130,6 +157,53 @@ func (server *Server) fetchItem(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user = *UserReceived
+	ZoneReceived.Space = *spaceReceived
+	BoxReceived.Zone = *ZoneReceived
+	itemReceived.Box = *BoxReceived
+	responses.JSON(w, http.StatusOK, itemReceived)
+}
+
+func (server *Server) fetchItemForUser(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	iid, err := strconv.ParseUint(vars["itemID"], 10, 64)
+	uid, err := strconv.ParseUint(vars["userID"], 10, 64)
+
+	if err != nil {
+		responses.ERROR(w, http.StatusBadRequest, err)
+		return
+	}
+	item := models.Item{}
+	itemReceived, err := item.FindItemByID(server.DB, iid)
+	if err != nil {
+		responses.ERROR(w, http.StatusInternalServerError, err)
+		return
+	}
+	user := models.User{}
+	UserReceived, err := user.FindUserByID(server.DB, uint32(uid))
+	if err != nil {
+		responses.ERROR(w, http.StatusInternalServerError, err)
+		return
+	}
+	user = *UserReceived
+	box := models.Box{}
+	BoxReceived, err := box.FindBoxByIDAndZoneID(server.DB, uint64(itemReceived.Box.ID), uint64(itemReceived.Box.ZoneID))
+	if err != nil {
+		responses.ERROR(w, http.StatusInternalServerError, err)
+		return
+	}
+	zone := models.Zone{}
+	ZoneReceived, err := zone.FindZoneBySpaceID(server.DB, uint64(BoxReceived.Zone.ID), uint64(BoxReceived.Zone.SpaceID))
+	if err != nil {
+		responses.ERROR(w, http.StatusInternalServerError, err)
+		return
+	}
+	space := models.Space{}
+	spaceReceived, err := space.FindSpaceByIDAndUserID(server.DB, uint64(ZoneReceived.Space.ID), uint64(ZoneReceived.Space.OwnerID))
+	if err != nil {
+		responses.ERROR(w, http.StatusInternalServerError, err)
+		return
+	}
+
 	ZoneReceived.Space = *spaceReceived
 	BoxReceived.Zone = *ZoneReceived
 	itemReceived.Box = *BoxReceived
