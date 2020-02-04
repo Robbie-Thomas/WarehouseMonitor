@@ -31,7 +31,7 @@ func (z *Zone) Validate() error {
 		return errors.New("Required Zone Name")
 	}
 	if z.SpaceID < 1 {
-		return errors.New("Requires Space")
+		return errors.New("requires Space")
 	}
 	return nil
 }
@@ -61,7 +61,7 @@ func (z *Zone) FetchSpace(err error, db *gorm.DB) (*Zone, error) {
 
 func (z *Zone) FindAllZones(db *gorm.DB) (*[]Zone, error) {
 	var err error
-	zones := []Zone{}
+	var zones []Zone
 	err = db.Debug().Model(&Zone{}).Limit(100).Find(&zones).Error
 	if err != nil {
 		return &[]Zone{}, err

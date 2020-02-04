@@ -61,7 +61,7 @@ func (s *Space) FetchUser(err error, db *gorm.DB) (*Space, error) {
 
 func (s *Space) FindAllSpaces(db *gorm.DB) (*[]Space, error) {
 	var err error
-	spaces := []Space{}
+	var spaces []Space
 	err = db.Debug().Model(&Space{}).Limit(100).Find(&spaces).Error
 	if err != nil {
 		return &[]Space{}, err
@@ -77,9 +77,9 @@ func (s *Space) FindAllSpaces(db *gorm.DB) (*[]Space, error) {
 	return &spaces, nil
 }
 
-func (s *Space) FindSpaceByID(db *gorm.DB, pid uint64) (*Space, error) {
+func (s *Space) FindSpaceByID(db *gorm.DB, uid uint64) (*Space, error) {
 	var err error
-	err = db.Debug().Model(&Space{}).Where("id = ?", pid).Take(&s).Error
+	err = db.Debug().Model(&Space{}).Where("id = ?", uid).Take(&s).Error
 	if err != nil {
 		return &Space{}, err
 	}
